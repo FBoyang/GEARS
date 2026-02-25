@@ -182,26 +182,14 @@ class GeneSimNetwork():
             if n not in self.G.nodes():
                 self.G.add_node(n)
         
-        # edge_index_ = [(node_map[e[0]], node_map[e[1]]) for e in
-        #               self.G.edges]
-        # self.edge_index = torch.tensor(edge_index_, dtype=torch.long).T
-        
-        # Filter edges to those present in node_map to avoid KeyError
-        valid_edges = [(u, v) for (u, v) in self.G.edges if u in node_map and v in node_map]
-
-        # Build edge_index and edge_weight only from valid edges
-        edge_attr = nx.get_edge_attributes(self.G, 'importance')
-        edge_index_ = [(node_map[u], node_map[v]) for (u, v) in valid_edges]
-        importance = np.array([edge_attr[(u, v)] for (u, v) in valid_edges])
-
+        edge_index_ = [(node_map[e[0]], node_map[e[1]]) for e in
+                      self.G.edges]
         self.edge_index = torch.tensor(edge_index_, dtype=torch.long).T
-        self.edge_weight = torch.Tensor(importance)
-        
         #self.edge_weight = torch.Tensor(self.edge_list['importance'].values)
-        # edge_attr = nx.get_edge_attributes(self.G, 'importance') 
         
-        # importance = np.array([edge_attr[e] for e in self.G.edges])
-        # self.edge_weight = torch.Tensor(importance)
+        edge_attr = nx.get_edge_attributes(self.G, 'importance') 
+        importance = np.array([edge_attr[e] for e in self.G.edges])
+        self.edge_weight = torch.Tensor(importance)
 
 def get_GO_edge_list(args):
     """

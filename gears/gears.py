@@ -515,8 +515,6 @@ class GEARS:
                 batch.to(self.device)
                 optimizer.zero_grad()
                 y = batch.y
-                if y.dim() == 1:
-                    y = y.view(batch.num_graphs, -1)
                 if self.config['uncertainty']:
                     pred, logvar = self.model(batch)
                     loss = uncertainty_loss_fct(pred, logvar, y, batch.pert,

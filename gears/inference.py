@@ -34,31 +34,13 @@ def evaluate(loader, model, uncertainty, device):
             else:
                 p = model(batch)
             t = batch.y
-            if t.dim() == 1:
-                t = t.view(batch.num_graphs, -1)  # (B, G)
-
-            if p.dim() == 1:
-                p = p.view(batch.num_graphs, -1)  # safety
             pred.extend(p.cpu())
             truth.extend(t.cpu())
             
-            # # Differentially expressed genes
-            # for itr, de_idx in enumerate(batch.de_idx):
-            #     pred_de.append(p[itr, de_idx])
-            #     truth_de.append(t[itr, de_idx])
-            
-            # DE genes: de_idx was collated flat; reshape to (B, num_de)
-            de_idx = batch.de_idx
-            if de_idx.dim() == 1:
-                de_idx = de_idx.view(batch.num_graphs, -1)
-
-            for i in range(batch.num_graphs):
-                idxs = de_idx[i]
-                # optionally mask out padded -1 entries
-                if (idxs >= 0).any():
-                    valid = idxs[idxs >= 0].long()
-                    pred_de.append(p[i, valid])
-                    truth_de.append(t[i, valid])
+            # Differentially expressed genes
+            for itr, de_idx in enumerate(batch.de_idx):
+                pred_de.append(p[itr, de_idx])
+                truth_de.append(t[itr, de_idx])
 
     # all genes
     results['pert_cat'] = np.array(pert_cat)
@@ -66,19 +48,11 @@ def evaluate(loader, model, uncertainty, device):
     truth = torch.stack(truth)
     results['pred']= pred.detach().cpu().numpy()
     results['truth']= truth.detach().cpu().numpy()
-    
 
-    # DE genes - handle empty case
-    if len(pred_de) > 0:
-        pred_de = torch.stack(pred_de)
-        truth_de = torch.stack(truth_de)
-        results['pred_de'] = pred_de.detach().cpu().numpy()
-        results['truth_de'] = truth_de.detach().cpu().numpy()
-    else:
-        # Fallback: use all genes if no DE genes available
-        print("Warning: No valid DE indices found. Using all genes for DE metrics.")
-        results['pred_de'] = results['pred']
-        results['truth_de'] = results['truth']
+    pred_de = torch.stack(pred_de)
+    truth_de = torch.stack(truth_de)
+    results['pred_de']= pred_de.detach().cpu().numpy()
+    results['truth_de']= truth_de.detach().cpu().numpy()
     
     if uncertainty:
         results['logvar'] = torch.stack(logvar).detach().cpu().numpy()
